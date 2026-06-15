@@ -1,4 +1,5 @@
 import { config } from './config.js';
+import { generateUserAgent } from './lib/user-agent.js';
 
 /**
  * @param {string} path - Site path or full URL
@@ -12,7 +13,10 @@ export async function fetchPage(path) {
 
   try {
     const response = await fetch(url, {
-      headers: config.fetch.headers,
+      headers: {
+        ...config.fetch.headers,
+        'User-Agent': generateUserAgent(),
+      },
       signal: controller.signal,
     });
 

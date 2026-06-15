@@ -6,12 +6,14 @@ const rootDir = join(__dirname, '..');
 
 export const config = {
   baseUrl: 'https://vkusvill.ru',
-  linksFile: join(rootDir, 'startt-links.json'),
+  linksFile: join(rootDir, 'start-links.json'),
+  collectedLinksFile: join(rootDir, 'collected_links.json'),
   outputDir: join(rootDir, 'output'),
+  requestDelayMs: 35_000,
+  workerThreads: 1,
   fetch: {
-    timeoutMs: 30_000,
+    timeoutMs: 120_000,
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; vv-parsing/0.1)',
       Accept: 'text/html,application/xhtml+xml',
       'Accept-Language': 'ru-RU,ru;q=0.9',
     },
