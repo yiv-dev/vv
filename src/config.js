@@ -9,13 +9,19 @@ export const config = {
   linksFile: join(rootDir, 'start-links.json'),
   collectedLinksFile: join(rootDir, 'collected_links.json'),
   outputDir: join(rootDir, 'output'),
-  requestDelayMs: 35_000,
+  requestDelayMs: 15_000,
   workerThreads: 1,
   fetch: {
-    timeoutMs: 120_000,
+    timeoutMs: 10_000,
     headers: {
       Accept: 'text/html,application/xhtml+xml',
       'Accept-Language': 'ru-RU,ru;q=0.9',
     },
+  },
+  enrich: {
+    workerThreads: 1,
+    headless: false,
+    outputDir: join(rootDir, 'output'),
+    actionTimeoutMs: 120_000,
   },
 };

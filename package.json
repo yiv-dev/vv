@@ -10,6 +10,7 @@
     "start": "node src/index.js",
     "parse": "node src/index.js",
     "collect-links": "node src/collect_links.js",
+    "enrich-products": "node src/enrich_products.js",
     "postinstall": "playwright install chromium"
   },
   "keywords": [
