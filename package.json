@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node src/index.js",
     "parse": "node src/index.js",
-    "collect-links": "node src/collect_links.js"
+    "collect-links": "node src/collect_links.js",
+    "postinstall": "playwright install chromium"
   },
   "keywords": [
     "vkusvill",
@@ -18,7 +19,7 @@
   ],
   "license": "UNLICENSED",
   "dependencies": {
-    "axios": "^1.18.0",
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0",
+    "playwright": "^1.52.0"
   }
 }

@@ -1,29 +1,26 @@
-import * as cheerio from 'cheerio';
-
-const PRODUCT_SELECTOR = 'a.ProductCard__imageLink.js-product-detail-link';
-const PAGER_SELECTOR = 'div.VV_Pager.js-lk-pager a';
+export const PRODUCT_SELECTOR = 'a.ProductCard__imageLink.js-product-detail-link';
+export const PAGER_SELECTOR = 'div.VV_Pager.js-lk-pager a';
 
 /**
- * @param {string} html
- * @returns {string[]}
+ * @param {import('playwright').Page} page
+ * @returns {Promise<string[]>}
  */
-export function extractProductLinks(html) {
-  const $ = cheerio.load(html);
-  console.log("🚀 ~ extractProductLinks ~ $:", $(PRODUCT_SELECTOR));
-  return $(PRODUCT_SELECTOR)
-    .map((_, el) => $(el).attr('href')?.trim())
-    .get()
-    .filter(Boolean);
+export async function extractProductLinksFromPage(page) {
+  return page.locator(PRODUCT_SELECTOR).evaluateAll((elements) =>
+    elements
+      .map((el) => el.getAttribute('href')?.trim())
+      .filter(Boolean),
+  );
 }
 
 /**
- * @param {string} html
- * @returns {string[]}
+ * @param {import('playwright').Page} page
+ * @returns {Promise<string[]>}
  */
-export function extractPagerLinks(html) {
-  const $ = cheerio.load(html);
-  return $(PAGER_SELECTOR)
-    .map((_, el) => $(el).attr('href')?.trim())
-    .get()
-    .filter(Boolean);
+export async function extractPagerLinksFromPage(page) {
+  return page.locator(PAGER_SELECTOR).evaluateAll((elements) =>
+    elements
+      .map((el) => el.getAttribute('href')?.trim())
+      .filter(Boolean),
+  );
 }
