@@ -40,7 +40,7 @@ export const config = {
     workerThreads: 1,
     headless: true,
     outputDir: join(rootDir, 'output'),
-    actionTimeoutMs: 40_000,
+    actionTimeoutMs: 60_000,
     resultRowsPerFile: parsePositiveInt(process.env.ENRICH_RESULT_ROWS_PER_FILE, 10),
   },
 };

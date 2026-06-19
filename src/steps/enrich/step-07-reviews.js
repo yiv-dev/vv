@@ -4,7 +4,7 @@
 const REVIEWS_TAB_SELECTOR =
   '#product-detail-tabs > div > div.VV23_DetailProdPageInfoTabs__Header.js-vv23-detail-prod-tabs__header > div > div > div:nth-child(2) > button';
 
-const RATING_MARKS_SELECTOR = 'div.ReviewsApiCat4RatingMarks';
+const RATING_MARKS_SELECTOR = 'div.ReviewsApiCat4Row div.ReviewsApiCat4RatingBlock:not(.hidden) > div.ReviewsApiCat4RatingMarks';
 const RATING_MARK_SELECTOR = 'div.ReviewsApiCat4RatingMark';
 const FILLED_STAR_SELECTOR = 'svg.ReviewsApiCat4Stars__Icon._fill';
 const COUNT_SELECTOR = 'div.ReviewsApiCat4RatingMark__Count';
