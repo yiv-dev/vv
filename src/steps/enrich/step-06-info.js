@@ -10,25 +10,32 @@ const INFO_DESC_SELECTOR = 'div.VV23_DetailProdPageInfoDescItem__Desc';
 export async function run(ctx) {
   const infoItems = ctx.page.locator(INFO_ITEM_SELECTOR);
   const itemCount = await infoItems.count();
-  const info = [];
+  /** @type {Record<string, string>} */
+  const info = {};
+  let untitledCounter = 0;
 
   for (let index = 0; index < itemCount; index += 1) {
     const item = infoItems.nth(index);
     const desc = item.locator(INFO_DESC_SELECTOR).first();
     const text = (await desc.textContent())?.trim() ?? '';
 
-    const titleEl = item.locator(INFO_TITLE_SELECTOR).first();
-    if ((await titleEl.count()) > 0) {
-      const title = (await titleEl.textContent())?.trim() ?? '';
-      if (title && text) {
-        info.push(`${title} -- ${text}`);
-      }
+    if (!text) {
       continue;
     }
 
-    if (text) {
-      info.push(text);
+    const titleEl = item.locator(INFO_TITLE_SELECTOR).first();
+    let fieldName;
+
+    if ((await titleEl.count()) > 0) {
+      fieldName = (await titleEl.textContent())?.trim() ?? '';
     }
+
+    if (!fieldName) {
+      untitledCounter += 1;
+      fieldName = `info_${untitledCounter}`;
+    }
+
+    info[fieldName] = text;
   }
 
   ctx.product.info = info;

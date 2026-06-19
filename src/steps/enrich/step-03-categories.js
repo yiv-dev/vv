@@ -8,6 +8,13 @@ const BREADCRUMBS_SELECTOR =
  */
 export async function run(ctx) {
   const texts = await ctx.page.locator(BREADCRUMBS_SELECTOR).allTextContents();
-  const trimmed = texts.map((text) => text.trim()).filter(Boolean);
-  ctx.product.categories = [...new Set(trimmed)];
+  const trimmed = [...new Set(texts.map((text) => text.trim()).filter(Boolean))];
+  /** @type {Record<string, string>} */
+  const categories = {};
+
+  for (const [index, text] of trimmed.entries()) {
+    categories[`category_${index + 1}`] = text;
+  }
+
+  ctx.product.categories = categories;
 }
