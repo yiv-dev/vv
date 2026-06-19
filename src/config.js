@@ -4,6 +4,24 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
 
+/**
+ * @param {string | undefined} raw
+ * @param {number} fallback
+ * @returns {number}
+ */
+function parsePositiveInt(raw, fallback) {
+  if (raw === undefined || raw === '') {
+    return fallback;
+  }
+
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 1) {
+    throw new Error('ENRICH_RESULT_ROWS_PER_FILE must be a positive integer');
+  }
+
+  return value;
+}
+
 export const config = {
   baseUrl: 'https://vkusvill.ru',
   linksFile: join(rootDir, 'start-links.json'),
@@ -20,8 +38,9 @@ export const config = {
   },
   enrich: {
     workerThreads: 1,
-    headless: false,
+    headless: true,
     outputDir: join(rootDir, 'output'),
-    actionTimeoutMs: 120_000,
+    actionTimeoutMs: 40_000,
+    resultRowsPerFile: parsePositiveInt(process.env.ENRICH_RESULT_ROWS_PER_FILE, 10),
   },
 };

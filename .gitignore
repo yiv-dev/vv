@@ -10,3 +10,5 @@ coverage/
 Thumbs.db
 .agents/
 generated/
+output/**/*.json
+input/**/*.json

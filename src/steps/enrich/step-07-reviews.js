@@ -1,62 +1,50 @@
 /** @typedef {import('./step-01-link.js').StepContext} StepContext */
 /** @typedef {import('playwright').Page} Page */
 
-import { parseReviewDate } from '../../lib/parse-review-date.js';
-
 const REVIEWS_TAB_SELECTOR =
   '#product-detail-tabs > div > div.VV23_DetailProdPageInfoTabs__Header.js-vv23-detail-prod-tabs__header > div > div > div:nth-child(2) > button';
 
-const LOAD_MORE_SELECTOR = 'div.js-product-api-reviews-more > button';
-const REVIEW_ITEM_SELECTOR = 'div.ReviewsApiCat4List div.ReviewsApiCat4ListItem.js-product-api-review';
-const RATE_SELECTOR = 'div.ReviewsApiCat4ListItemRate';
-const BODY_SELECTOR = 'div.ReviewsApiCat4ListItemBody';
-const DATE_SELECTOR = 'div.ReviewsApiCat4ListItemCardDate';
-
-const LOW_RATES = new Set(['1', '2', '3']);
-
-/**
- * @param {unknown} err
- * @returns {boolean}
- */
-function isTimeoutError(err) {
-  return err instanceof Error && err.name === 'TimeoutError';
-}
+const RATING_MARKS_SELECTOR = 'div.ReviewsApiCat4RatingMarks';
+const RATING_MARK_SELECTOR = 'div.ReviewsApiCat4RatingMark';
+const FILLED_STAR_SELECTOR = 'svg.ReviewsApiCat4Stars__Icon._fill';
+const COUNT_SELECTOR = 'div.ReviewsApiCat4RatingMark__Count';
 
 /**
  * @param {Page} page
- * @returns {Promise<object[]>}
+ * @returns {Promise<Record<string, string>>}
  */
-async function collectReviewsFromPage(page) {
-  const reviews = [];
-  const reviewItems = page.locator(REVIEW_ITEM_SELECTOR);
-  const count = await reviewItems.count();
+async function collectRatingMarks(page) {
+  const reviews_obj = {};
 
-  for (let index = 0; index < count; index += 1) {
-    const item = reviewItems.nth(index);
-    const rate = (await item.locator(RATE_SELECTOR).first().textContent())?.trim() ?? '';
+  const container = page.locator(RATING_MARKS_SELECTOR).first();
+  if ((await container.count()) === 0) {
+    return reviews_obj;
+  }
 
-    if (!LOW_RATES.has(rate)) {
+  const marks = container.locator(RATING_MARK_SELECTOR);
+  const markCount = await marks.count();
+
+  for (let index = 0; index < markCount; index += 1) {
+    const mark = marks.nth(index);
+    const rating_value = String(await mark.locator(FILLED_STAR_SELECTOR).count());
+
+    const countEl = mark.locator(COUNT_SELECTOR).first();
+    if ((await countEl.count()) === 0) {
       continue;
     }
 
-    const text = (await item.locator(BODY_SELECTOR).first().textContent())?.trim() ?? '';
-    const date = (await item.locator(DATE_SELECTOR).first().textContent())?.trim() ?? '';
-
-    reviews.push({
-      rate,
-      text,
-      date,
-      formated_date: parseReviewDate(date),
-    });
+    reviews_obj[rating_value] = (await countEl.textContent())?.trim() ?? '';
   }
 
-  return reviews;
+  return reviews_obj;
 }
 
 /**
  * @param {StepContext} ctx
  */
 export async function run(ctx) {
+  const reviews_obj = {};
+
   try {
     const reviewsTab = ctx.page.locator(REVIEWS_TAB_SELECTOR).first();
     if (await reviewsTab.isVisible()) {
@@ -64,23 +52,10 @@ export async function run(ctx) {
       await ctx.page.waitForTimeout(500);
     }
 
-    const loadMore = ctx.page.locator(LOAD_MORE_SELECTOR).first();
-    while (await loadMore.isVisible().catch(() => false)) {
-      try {
-        await loadMore.click({ timeout: ctx.timeoutMs });
-        await ctx.page.waitForTimeout(500);
-      } catch (err) {
-        if (isTimeoutError(err)) {
-          break;
-        }
-        throw err;
-      }
-    }
-  } catch (err) {
-    if (!isTimeoutError(err)) {
-      throw err;
-    }
+    Object.assign(reviews_obj, await collectRatingMarks(ctx.page));
+  } catch {
+    // Missing reviews tab or rating marks — keep empty object.
   }
 
-  ctx.product.reviews = await collectReviewsFromPage(ctx.page);
+  ctx.product.reviews = reviews_obj;
 }

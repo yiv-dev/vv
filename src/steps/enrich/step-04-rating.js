@@ -1,13 +1,17 @@
 /** @typedef {import('./step-01-link.js').StepContext} StepContext */
 
-const RATING_SELECTOR = 'div.Product__rating > a > meta:nth-child(2)';
+const RATING_SELECTOR = 'div.Rating__text';
 
 /**
  * @param {StepContext} ctx
  */
 export async function run(ctx) {
-  const locator = ctx.page.locator(RATING_SELECTOR).first();
-  const content = await locator.getAttribute('content');
-  const text = (await locator.textContent())?.trim() ?? '';
-  ctx.product.rating = (content ?? text).trim();
+  const locator = ctx.page.locator(RATING_SELECTOR);
+
+  if ((await locator.count()) === 0) {
+    ctx.product.rating = '';
+    return;
+  }
+
+  ctx.product.rating = (await locator.first().textContent())?.trim() ?? '';
 }

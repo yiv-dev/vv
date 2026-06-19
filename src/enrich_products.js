@@ -1,9 +1,9 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import { config } from './config.js';
-import { formatOutputFilename } from './lib/format-output-filename.js';
+import { createEnrichBatchWriter } from './lib/enrich-batch-writer.js';
 
 const workerFile = fileURLToPath(new URL('./workers/enrich-products.worker.js', import.meta.url));
 const rootDir = join(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -45,18 +45,20 @@ function resolveInputPath(inputPath) {
 
 /**
  * @param {string[]} links
- * @returns {Promise<object[]>}
+ * @param {ReturnType<typeof createEnrichBatchWriter>} batchWriter
+ * @returns {Promise<void>}
  */
-function runWorkers(links) {
+function runWorkers(links, batchWriter) {
   const workerCount = resolveWorkerCount(links.length);
   const chunks = chunkItems(links, workerCount);
 
   return new Promise((resolvePromise, reject) => {
-    const products = [];
     let pending = chunks.length;
     let failed = false;
 
     for (const chunk of chunks) {
+      let workerDone = false;
+
       const worker = new Worker(workerFile, {
         workerData: {
           links: chunk,
@@ -73,11 +75,21 @@ function runWorkers(links) {
           console.log(`[worker] ${message.link}`);
         }
         if (message.type === 'product') {
-          products.push(message.product);
+          batchWriter.enqueue(message.product);
           console.log(JSON.stringify(message.product, null, 2));
+        }
+        if (message.type === 'skip') {
+          console.log(`[worker] skipped ${message.link}: ${message.message}`);
         }
         if (message.type === 'error') {
           console.error(`[worker] ${message.link}: ${message.message}`);
+        }
+        if (message.type === 'done') {
+          workerDone = true;
+          pending -= 1;
+          if (pending === 0 && !failed) {
+            resolvePromise();
+          }
         }
       });
 
@@ -93,9 +105,9 @@ function runWorkers(links) {
           return;
         }
 
-        pending -= 1;
-        if (pending === 0 && !failed) {
-          resolvePromise(products);
+        if (!workerDone && !failed) {
+          failed = true;
+          reject(new Error('Worker exited without done message'));
         }
       });
     }
@@ -117,20 +129,26 @@ async function main() {
     throw new Error(`No links in ${inputPath}`);
   }
 
-  const outputFilename = formatOutputFilename();
+  const runDate = new Date();
   await mkdir(config.enrich.outputDir, { recursive: true });
-  const outputPath = join(config.enrich.outputDir, outputFilename);
+
+  const batchWriter = createEnrichBatchWriter({
+    outputDir: config.enrich.outputDir,
+    rowsPerFile: config.enrich.resultRowsPerFile,
+    runDate,
+  });
 
   console.log(
     `Enriching ${links.length} products with ${resolveWorkerCount(links.length)} worker threads...`,
   );
-  console.log(`Output file: ${outputPath}`);
+  console.log(
+    `Output: ${config.enrich.outputDir}, ${config.enrich.resultRowsPerFile} rows/file, pattern: *-part-XXXX.json`,
+  );
 
-  const products = await runWorkers(links);
-  const uniqueProducts = [...new Map(products.map((product) => [product.link, product])).values()];
+  await runWorkers(links, batchWriter);
+  const { totalSaved, filesWritten } = await batchWriter.finish();
 
-  await writeFile(outputPath, JSON.stringify(uniqueProducts, null, 2));
-  console.log(`Saved ${uniqueProducts.length} products → ${outputPath}`);
+  console.log(`Done: ${totalSaved} products in ${filesWritten} file(s)`);
 }
 
 main().catch((err) => {

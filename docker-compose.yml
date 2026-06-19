@@ -1,0 +1,14 @@
+services:
+  scrapper:
+    build: .
+    container_name: vv-parsing-scrapper
+    working_dir: /app
+    init: true
+    shm_size: 2gb
+    environment:
+      ENRICH_RESULT_ROWS_PER_FILE: "100"
+    volumes:
+      - .:/app
+      - ./input:/app/input
+      - ./output:/app/output
+    command: ["sleep", "infinity"]

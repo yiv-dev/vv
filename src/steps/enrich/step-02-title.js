@@ -6,13 +6,12 @@ const TITLE_SELECTOR = 'h1.Product__title.js-datalayer-catalog-list-name';
  * @param {StepContext} ctx
  */
 export async function run(ctx) {
-  const locator = ctx.page.locator(TITLE_SELECTOR).first();
-  await locator.waitFor({ state: 'visible', timeout: ctx.timeoutMs });
-  const title = (await locator.textContent())?.trim() ?? '';
+  const locator = ctx.page.locator(TITLE_SELECTOR);
 
-  if (!title) {
-    throw new Error(`Title not found for ${ctx.product.link}`);
+  if ((await locator.count()) === 0) {
+    ctx.product.title = '';
+    return;
   }
 
-  ctx.product.title = title;
+  ctx.product.title = (await locator.first().textContent())?.trim() ?? '';
 }

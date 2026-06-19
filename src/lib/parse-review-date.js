@@ -19,9 +19,7 @@ const RUSSIAN_MONTHS = {
  */
 export function parseReviewDate(raw) {
   const trimmed = raw.trim().split('·')[0]?.trim() ?? '';
-  console.log("🚀 ~ parse-review-date.js:22 ~ parseReviewDate ~ trimmed:", trimmed);
   const match = trimmed.match(/(\d{1,2})\s+([^\s\d]+)\s+(\d{4})/u);
-  console.log("🚀 ~ parse-review-date.js:24 ~ parseReviewDate ~ match:", match);
 
   if (!match) {
     return '';
